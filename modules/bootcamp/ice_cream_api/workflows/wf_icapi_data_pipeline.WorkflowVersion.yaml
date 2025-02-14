@@ -1,0 +1,50 @@
+workflowExternalId: wf_icapi_data_pipeline
+version: '1'
+workflowDefinition:
+  tasks:
+  - externalId: oee_timeseries_task
+    name: OEE TimeSeries
+    type: function
+    parameters:
+      function:
+        externalId: oee_timeseries
+        data: {}
+    retries: 3
+    timeout: 3600
+    onFailure: abortWorkflow
+    dependsOn:
+      - externalId: icapi_datapoints_extractor_task
+  - externalId: icapi_datapoints_extractor_task
+    name: Extract Datapoints
+    type: function
+    parameters:
+      function:
+        externalId: icapi_datapoints_extractor
+        data: { hours: 1}
+    retries: 3
+    timeout: 3600
+    onFailure: abortWorkflow
+    dependsOn:
+      - externalId: contextualize_ts_assets_task
+  - externalId: contextualize_ts_assets_task
+    type: transformation
+    parameters:
+      transformation:
+        externalId: contextualize_ts_assets
+        concurrencyPolicy: fail
+    name: Contextualize TimeSeries and Assets
+    retries: 3
+    timeout: 3600
+    onFailure: abortWorkflow
+    dependsOn:
+      - externalId: create_asset_hierarchy_task
+  - externalId: create_asset_hierarchy_task
+    type: transformation
+    parameters:
+      transformation:
+        externalId: contextualize_ts_assets
+        concurrencyPolicy: fail
+    name: Create Asset Hierarchy
+    retries: 3
+    timeout: 3600
+    onFailure: abortWorkflow
